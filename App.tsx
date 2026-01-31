@@ -72,6 +72,9 @@ const App: React.FC = () => {
     setAuthLoading(true);
     try {
       const { data, error } = await supabase.signUp(authEmail, authPassword);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleRegister',message:'signUp result',data:{hasError:!!error,errorMsg:error?.message?.slice(0,80),hasData:!!data},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+      // #endregion
       if (error) {
         setAuthError(error.message || 'Error al registrar');
         return;

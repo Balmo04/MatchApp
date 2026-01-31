@@ -149,18 +149,53 @@ export const supabaseService = {
     email: string,
     password: string
   ): Promise<{ data: { user: UserProfile } | null; error: Error | null }> {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signUp',message:'signUp entry',data:{emailLen:email?.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+    // #endregion
     const { data: authData, error: authError } = await client.auth.signUp({
       email,
       password,
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signUp',message:'auth.signUp returned',data:{hasAuthError:!!authError,authErrorMsg:authError?.message?.slice(0,80),hasUser:!!authData?.user,userId:authData?.user?.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H3,H4'})}).catch(()=>{});
+    // #endregion
     if (authError) return { data: null, error: authError as unknown as Error };
     if (!authData.user) return { data: null, error: new Error('No user') };
 
+    // Ensure client has session so RLS policy (auth.uid() = id) allows the insert.
+    if (authData.session) {
+      await client.auth.setSession({
+        access_token: authData.session.access_token,
+        refresh_token: authData.session.refresh_token,
+      });
+    }
+
+    // Create profile from client (trigger removed to avoid "Database error saving new user").
+    const { error: insertError } = await client.from('profiles').insert({
+      id: authData.user.id,
+      email: authData.user.email ?? null,
+      credits: 5,
+      is_admin: authData.user.email === 'admin@match.com',
+    });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signUp',message:'profile insert returned',data:{hasInsertError:!!insertError,insertErrorMsg:insertError?.message?.slice(0,80)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H7'})}).catch(()=>{});
+    // #endregion
+    if (insertError && (insertError as { code?: string }).code !== '23505') {
+      return { data: null, error: insertError as unknown as Error };
+    }
+    // 23505 = duplicate key; profile may exist from trigger in another env — continue to select
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signUp',message:'before profile fetch',data:{userId:authData.user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     const { data: profile, error: profileError } = await client
       .from('profiles')
       .select('id, email, credits, is_admin')
       .eq('id', authData.user.id)
       .single();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signUp',message:'profile fetch returned',data:{hasProfileError:!!profileError,profileErrorMsg:profileError?.message?.slice(0,80),hasProfile:!!profile},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H4'})}).catch(()=>{});
+    // #endregion
 
     if (profileError || !profile) {
       return {
