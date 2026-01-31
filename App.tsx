@@ -18,20 +18,40 @@ const App: React.FC = () => {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
-  // Auto-login for demo purposes if no user
   useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.getProfile();
-      if (data) setUser(data);
-    };
-    checkUser();
+    const unsubscribe = supabase.onAuthStateChange((profile) => {
+      setUser(profile);
+    });
+    return unsubscribe;
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { data } = await supabase.signIn(authEmail);
-    if (data?.user) setUser(data.user);
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const timeoutMs = 15000;
+      const result = await Promise.race([
+        supabase.signIn(authEmail, authPassword),
+        new Promise<{ data: null; error: Error }>((_, reject) =>
+          setTimeout(() => reject(new Error('La conexión tardó demasiado. Revisa tu red o Supabase.')), timeoutMs)
+        ),
+      ]);
+      const { data, error } = result;
+      if (error) {
+        setAuthError(error.message || 'Error al iniciar sesión');
+        return;
+      }
+      if (data?.user) setUser(data.user);
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleImageSelected = (base64: string) => {
@@ -102,17 +122,28 @@ const App: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input 
+                  required
                   type="password" 
+                  value={authPassword}
+                  onChange={e => setAuthPassword(e.target.value)}
                   placeholder="••••••••" 
                   className="w-full bg-slate-50 border-none rounded-2xl px-12 py-4 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 />
               </div>
             </div>
 
-            <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-full font-bold shadow-xl hover:bg-slate-800 hover:-translate-y-1 transition-all">
-              ENTER ATELIER
+            {authError && (
+              <p className="text-center text-sm text-red-600 bg-red-50 py-2 px-4 rounded-xl">{authError}</p>
+            )}
+
+            <button 
+              type="submit" 
+              disabled={authLoading}
+              className="w-full bg-slate-900 text-white py-4 rounded-full font-bold shadow-xl hover:bg-slate-800 disabled:opacity-50 transition-all"
+            >
+              {authLoading ? 'Entrando...' : 'ENTER ATELIER'}
             </button>
-            <p className="text-center text-[10px] text-slate-400">Enter 'admin@match.com' for administrative access</p>
+            <p className="text-center text-[10px] text-slate-400">Regístrate primero en Supabase Auth o usa admin@match.com para acceso admin</p>
           </form>
         </div>
       </div>
