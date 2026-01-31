@@ -131,18 +131,25 @@ export const supabaseService = {
       return { data: null, error: authError as unknown as Error };
     }
     if (!authData.user) return { data: null, error: new Error('No user') };
-    // Return minimal profile from auth user; onAuthStateChange will fetch full profile
-    // and update UI, avoiding duplicate profile fetch and AbortError race.
-    const minimalProfile: UserProfile = {
-      id: authData.user.id,
-      email: authData.user.email ?? '',
-      credits: 0,
-      isAdmin: false,
-    };
+    
+    // Obtener perfil completo de la base de datos
+    const { data: profile, error: profileError } = await client
+      .from('profiles')
+      .select('id, email, credits, is_admin')
+      .eq('id', authData.user.id)
+      .single();
+    
+    if (profileError || !profile) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'profile not found',data:{userId:authData.user.id,error:profileError?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'profile-fetch'})}).catch(()=>{});
+      // #endregion
+      return { data: null, error: new Error('Profile not found. Please contact support.') };
+    }
+    
     // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'signIn returning minimal profile',data:{userId:authData.user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'post-fix',runId:'post-fix'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'signIn returning full profile',data:{userId:authData.user.id,credits:profile.credits},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'profile-fetch'})}).catch(()=>{});
     // #endregion
-    return { data: { user: minimalProfile }, error: null };
+    return { data: { user: rowToProfile(profile) }, error: null };
   },
 
   async signUp(
@@ -186,7 +193,11 @@ export const supabaseService = {
     fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signUp',message:'profile insert returned',data:{hasInsertError:!!insertError,insertErrorMsg:insertError?.message?.slice(0,80)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H7'})}).catch(()=>{});
     // #endregion
     if (insertError && (insertError as { code?: string }).code !== '23505') {
-      return { data: null, error: insertError as unknown as Error };
+      // Mejorar mensaje de error para RLS
+      const errorMessage = insertError.message?.includes('row-level security') 
+        ? 'Error al crear perfil. Verifica la configuración de Supabase.'
+        : insertError.message || 'Error al crear perfil';
+      return { data: null, error: new Error(errorMessage) };
     }
     // 23505 = duplicate key; profile may exist from trigger in another env — continue to select
 
@@ -203,9 +214,38 @@ export const supabaseService = {
     // #endregion
 
     if (profileError || !profile) {
+      // Si el perfil no existe después del INSERT, intentar crearlo como fallback
+      if (profileError && (profileError as { code?: string }).code === 'PGRST116') {
+        // PGRST116 = no rows returned, perfil no existe
+        // Intentar crear el perfil nuevamente
+        const { error: retryInsertError } = await client.from('profiles').insert({
+          id: authData.user.id,
+          email: authData.user.email ?? null,
+          credits: 5,
+          is_admin: authData.user.email === 'admin@match.com',
+        });
+        
+        if (retryInsertError && (retryInsertError as { code?: string }).code !== '23505') {
+          return { data: null, error: new Error('No se pudo crear el perfil. Intenta iniciar sesión.') };
+        }
+        
+        // Intentar obtener el perfil nuevamente
+        const { data: retryProfile, error: retryError } = await client
+          .from('profiles')
+          .select('id, email, credits, is_admin')
+          .eq('id', authData.user.id)
+          .single();
+          
+        if (retryError || !retryProfile) {
+          return { data: null, error: new Error('Perfil no encontrado después del registro. Intenta iniciar sesión.') };
+        }
+        
+        return { data: { user: rowToProfile(retryProfile) }, error: null };
+      }
+      
       return {
         data: null,
-        error: (profileError as Error) ?? new Error('Profile not found'),
+        error: (profileError as Error) ?? new Error('Perfil no encontrado. Intenta iniciar sesión.'),
       };
     }
     return { data: { user: rowToProfile(profile) }, error: null };
@@ -287,11 +327,35 @@ export const supabaseService = {
       // #region agent log
       fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'calling getProfile',data:{userId:session.user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
       // #endregion
-      const { data } = await supabaseService.getProfile();
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'getProfile returned',data:{hasData:!!data,hasError:false},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
-      // #endregion
-      callback(data ?? null);
+      try {
+        // Agregar timeout a getProfile para evitar carga infinita
+        const profilePromise = supabaseService.getProfile();
+        const timeoutPromise = new Promise<{ data: UserProfile | null; error: Error | null }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: new Error('Timeout al obtener perfil') }), 10000)
+        );
+        
+        const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
+        
+        if (error) {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'getProfile error',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
+          // #endregion
+          // No actualizar estado si hay error, mantener estado anterior
+          console.warn('Error al obtener perfil:', error.message);
+          return;
+        }
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'getProfile returned',data:{hasData:!!data,hasError:false},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
+        // #endregion
+        callback(data ?? null);
+      } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'getProfile exception',data:{error:err instanceof Error ? err.message : String(err)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
+        // #endregion
+        console.error('Excepción al obtener perfil:', err);
+        // No actualizar estado si hay excepción
+      }
     });
     return () => subscription.unsubscribe();
   },
