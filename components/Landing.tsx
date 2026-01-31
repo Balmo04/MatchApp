@@ -94,22 +94,52 @@ const Landing: React.FC<LandingProps> = ({ onEnter }) => {
       </section>
 
       {/* Footer - Contáctanos */}
-      <footer className="border-t border-slate-200 bg-white/50">
+      <footer className="bg-slate-900">
         <div className="max-w-5xl mx-auto px-4 py-12 md:py-16">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
             <div>
               <h3 className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">Contáctanos</h3>
-              <p className="text-slate-600 text-sm max-w-md mb-4">
+              <p className="text-slate-300 text-sm max-w-md mb-4">
                 ¿Preguntas, sugerencias o quieres colaborar? Estamos aquí para ayudarte.
               </p>
               <a
                 href="https://www.linkedin.com/in/alejandro-sandoval742/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
+                className="inline-flex items-center gap-2 text-white hover:text-indigo-300 font-medium text-sm transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                LinkedIn
+                LinkedIn Alejandro Sandoval
+              </a><br></br>
+
+              <a
+                href="https://www.linkedin.com/in/diegoayalaes/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-white hover:text-indigo-300 font-medium text-sm transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                LinkedIn Diego Ayala
+              </a><br></br>
+
+              <a
+                href="https://www.linkedin.com/in/kenia-linares-ba66b338a/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-white hover:text-indigo-300 font-medium text-sm transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                LinkedIn Kenia Linares
+              </a><br></br>
+
+              <a
+                href="https://www.linkedin.com/in/emersonarevalo/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-white hover:text-indigo-300 font-medium text-sm transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                LinkedIn Emerson Arévalo
               </a>
             </div>
             <div className="text-slate-400 text-xs">
