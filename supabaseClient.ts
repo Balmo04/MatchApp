@@ -67,15 +67,24 @@ export const supabaseService = {
     product: Partial<Product>,
     imageFile: File
   ): Promise<{ data: Product | null; error: Error | null }> {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'uploadProduct entry',data:{fileName:imageFile.name,fileSize:imageFile.size},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'G'})}).catch(()=>{});
+    // #endregion
     const ext = imageFile.name.split('.').pop() || 'jpg';
     const path = `${crypto.randomUUID()}.${ext}`;
-
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'uploading to storage',data:{path,bucket:BUCKET_PRODUCT_IMAGES},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})}).catch(()=>{});
+    // #endregion
     const { error: uploadError } = await client.storage
       .from(BUCKET_PRODUCT_IMAGES)
       .upload(path, imageFile, { upsert: true });
-
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'storage upload returned',data:{hasError:!!uploadError,errorMsg:uploadError?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I'})}).catch(()=>{});
+    // #endregion
     if (uploadError) return { data: null, error: uploadError as unknown as Error };
-
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'inserting product row',data:{path},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'J'})}).catch(()=>{});
+    // #endregion
     const { data: row, error } = await client
       .from('products')
       .insert({
@@ -88,7 +97,9 @@ export const supabaseService = {
       })
       .select('id, name, category, price, description, image_path, prompt_fragment, created_at')
       .single();
-
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'insert returned',data:{hasRow:!!row,hasError:!!error,errorMsg:error?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'K'})}).catch(()=>{});
+    // #endregion
     if (error) return { data: null, error: error as unknown as Error };
     return { data: rowToProduct(row), error: null };
   },
