@@ -1,0 +1,7 @@
+{
+  "name": "MATCH Luxury Virtual Try-On",
+  "description": "A high-end virtual boutique where users can try on multiple garments simultaneously using advanced AI in-painting. Experience fashion with bone-white aesthetics and seamless AI integration.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
