@@ -70,11 +70,21 @@ const App: React.FC = () => {
     e.preventDefault();
     setAuthError(null);
     setAuthLoading(true);
+    // #region agent log
+    const timeoutMs = 15000;
+    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleRegister',message:'register start',data:{timeoutMs},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+    // #endregion
     try {
-      const { data, error } = await supabase.signUp(authEmail, authPassword);
+      const result = await Promise.race([
+        supabase.signUp(authEmail, authPassword),
+        new Promise<{ data: null; error: Error }>((_, reject) =>
+          setTimeout(() => reject(new Error('La conexión tardó demasiado. Revisa tu red o Supabase.')), timeoutMs)
+        ),
+      ]);
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleRegister',message:'signUp result',data:{hasError:!!error,errorMsg:error?.message?.slice(0,80),hasData:!!data},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleRegister',message:'signUp result',data:{hasError:!!result.error,errorMsg:result.error?.message?.slice(0,80),hasData:!!result.data},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
       // #endregion
+      const { data, error } = result;
       if (error) {
         // Si el email ya está registrado, cambiar a formulario de login
         if (error.message?.includes('ya está registrado')) {
@@ -91,6 +101,9 @@ const App: React.FC = () => {
         // El onAuthStateChange actualizará el estado del usuario
       }
     } catch (err: unknown) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleRegister',message:'catch',data:{msg:err instanceof Error ? err.message : String(err)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+      // #endregion
       setAuthError(err instanceof Error ? err.message : 'Error al registrar');
     } finally {
       setAuthLoading(false);
