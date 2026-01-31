@@ -2,12 +2,23 @@
 import { GoogleGenAI } from "@google/genai";
 import { Product } from "./types";
 
+const DEBUG_LOG = (payload: Record<string, unknown>) => {
+  fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, timestamp: Date.now(), sessionId: 'debug-session' }) }).catch(() => {});
+};
+
 export const generateTryOn = async (
   base64UserImage: string,
   selectedProducts: Product[]
 ): Promise<string> => {
+  // #region agent log
+  DEBUG_LOG({ hypothesisId: 'H1', location: 'geminiService.ts:generateTryOn:entry', message: 'env at entry', data: { apiKeySet: typeof process !== 'undefined' && !!process.env?.API_KEY, geminiKeySet: typeof process !== 'undefined' && !!process.env?.GEMINI_API_KEY } });
+  // #endregion
   // Fix: Initialized GoogleGenAI with a direct reference to process.env.API_KEY as per guidelines
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // #region agent log
+  const apiKeyValue = typeof process !== 'undefined' ? process.env?.API_KEY : undefined;
+  DEBUG_LOG({ hypothesisId: 'H2,H3,H5', location: 'geminiService.ts:before GoogleGenAI', message: 'value at use site', data: { apiKeySet: !!apiKeyValue, typeOf: typeof apiKeyValue } });
+  // #endregion
+  const ai = new GoogleGenAI({ apiKey: apiKeyValue });
   
   // Combine fragments into a coherent fashion prompt
   const fragments = selectedProducts.map(p => p.promptFragment).join(", ");
