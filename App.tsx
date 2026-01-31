@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Step, Product, UserProfile } from './types';
 import Layout from './components/Layout';
+import Landing from './components/Landing';
 import UploadSection from './components/UploadSection';
 import ProductCatalog from './components/ProductCatalog';
 import TryOnResult from './components/TryOnResult';
 import AdminDashboard from './components/AdminDashboard';
 import CreditSystem from './components/CreditSystem';
 import { supabase } from './supabaseClient';
-import { ArrowLeft, User, Mail, Lock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Mail, Lock } from 'lucide-react';
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>(Step.UPLOAD);
@@ -18,6 +19,7 @@ const App: React.FC = () => {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
+  const [showLogin, setShowLogin] = useState(false);
 
   // Auto-login for demo purposes if no user
   useEffect(() => {
@@ -73,6 +75,9 @@ const App: React.FC = () => {
   };
 
   if (!user) {
+    if (!showLogin) {
+      return <Landing onEnter={() => setShowLogin(true)} />;
+    }
     return (
       <div className="min-h-screen bg-[#F9F8F6] flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md bg-white p-12 rounded-[3rem] shadow-2xl border border-slate-100">
@@ -114,6 +119,13 @@ const App: React.FC = () => {
             </button>
             <p className="text-center text-[10px] text-slate-400">Enter 'admin@match.com' for administrative access</p>
           </form>
+          <button
+            type="button"
+            onClick={() => setShowLogin(false)}
+            className="w-full mt-4 text-slate-400 hover:text-slate-600 text-sm"
+          >
+            ← Volver a la landing
+          </button>
         </div>
       </div>
     );
