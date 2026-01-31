@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     const unsubscribe = supabase.onAuthStateChange((profile) => {
@@ -60,6 +61,28 @@ const App: React.FC = () => {
       fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleLogin',message:'catch',data:{msg:err instanceof Error ? err.message : String(err)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
       setAuthError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const { data, error } = await supabase.signUp(authEmail, authPassword);
+      if (error) {
+        setAuthError(error.message || 'Error al registrar');
+        return;
+      }
+      if (data?.user) {
+        setAuthError('Cuenta creada exitosamente. Revisa tu correo para confirmar tu cuenta.');
+        // Si la confirmación de email está deshabilitada, el usuario puede entrar directamente
+        // En ese caso, el onAuthStateChange actualizará el estado del usuario
+      }
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : 'Error al registrar');
     } finally {
       setAuthLoading(false);
     }
@@ -114,8 +137,40 @@ const App: React.FC = () => {
             <h1 className="text-5xl font-serif text-slate-900 mb-4 tracking-tight">MATCH</h1>
             <p className="text-slate-500 font-medium tracking-wide text-xs uppercase">The Virtual Luxury Atelier</p>
           </div>
+
+          {/* Toggle between Login and Register */}
+          <div className="flex items-center justify-center mb-6 bg-slate-50 rounded-full p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegistering(false);
+                setAuthError(null);
+              }}
+              className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all ${
+                !isRegistering
+                  ? 'bg-slate-900 text-white shadow-md'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Iniciar Sesión
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegistering(true);
+                setAuthError(null);
+              }}
+              className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all ${
+                isRegistering
+                  ? 'bg-slate-900 text-white shadow-md'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Registrarse
+            </button>
+          </div>
           
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase ml-4">Email Address</label>
               <div className="relative">
@@ -147,7 +202,13 @@ const App: React.FC = () => {
             </div>
 
             {authError && (
-              <p className="text-center text-sm text-red-600 bg-red-50 py-2 px-4 rounded-xl">{authError}</p>
+              <p className={`text-center text-sm py-2 px-4 rounded-xl ${
+                authError.includes('exitosamente') || authError.includes('confirmar')
+                  ? 'text-green-700 bg-green-50'
+                  : 'text-red-600 bg-red-50'
+              }`}>
+                {authError}
+              </p>
             )}
 
             <button 
@@ -155,9 +216,24 @@ const App: React.FC = () => {
               disabled={authLoading}
               className="w-full bg-slate-900 text-white py-4 rounded-full font-bold shadow-xl hover:bg-slate-800 disabled:opacity-50 transition-all"
             >
-              {authLoading ? 'Entrando...' : 'ENTER ATELIER'}
+              {authLoading 
+                ? (isRegistering ? 'Registrando...' : 'Entrando...') 
+                : (isRegistering ? 'CREAR CUENTA' : 'ENTER ATELIER')
+              }
             </button>
-            <p className="text-center text-[10px] text-slate-400">Regístrate primero en Supabase Auth o usa admin@match.com para acceso admin</p>
+            
+            {!isRegistering && (
+              <p className="text-center text-[10px] text-slate-400">
+                ¿No tienes cuenta?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsRegistering(true)}
+                  className="text-indigo-600 hover:text-indigo-800 underline"
+                >
+                  Regístrate aquí
+                </button>
+              </p>
+            )}
           </form>
           <button
             type="button"
