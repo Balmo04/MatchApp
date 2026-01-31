@@ -76,13 +76,19 @@ const App: React.FC = () => {
       fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleRegister',message:'signUp result',data:{hasError:!!error,errorMsg:error?.message?.slice(0,80),hasData:!!data},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
       // #endregion
       if (error) {
-        setAuthError(error.message || 'Error al registrar');
+        // Si el email ya está registrado, cambiar a formulario de login
+        if (error.message?.includes('ya está registrado')) {
+          setIsRegistering(false);
+          setAuthError('Este correo ya está registrado. Inicia sesión.');
+        } else {
+          setAuthError(error.message || 'Error al registrar');
+        }
         return;
       }
       if (data?.user) {
-        setAuthError('Cuenta creada exitosamente. Revisa tu correo para confirmar tu cuenta.');
-        // Si la confirmación de email está deshabilitada, el usuario puede entrar directamente
-        // En ese caso, el onAuthStateChange actualizará el estado del usuario
+        setAuthError('Cuenta creada. Bienvenido.');
+        // El usuario entra directamente sin confirmación de email
+        // El onAuthStateChange actualizará el estado del usuario
       }
     } catch (err: unknown) {
       setAuthError(err instanceof Error ? err.message : 'Error al registrar');
@@ -206,7 +212,7 @@ const App: React.FC = () => {
 
             {authError && (
               <p className={`text-center text-sm py-2 px-4 rounded-xl ${
-                authError.includes('exitosamente') || authError.includes('confirmar')
+                authError.includes('exitosamente') || authError.includes('confirmar') || authError.includes('Cuenta creada') || authError.includes('Bienvenido')
                   ? 'text-green-700 bg-green-50'
                   : 'text-red-600 bg-red-50'
               }`}>

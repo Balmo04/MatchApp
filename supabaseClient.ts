@@ -162,6 +162,11 @@ export const supabaseService = {
     if (authError) return { data: null, error: authError as unknown as Error };
     if (!authData.user) return { data: null, error: new Error('No user') };
 
+    // Con email confirmation OFF, session null = email ya registrado
+    if (!authData.session) {
+      return { data: null, error: new Error('Este correo ya está registrado. Inicia sesión.') };
+    }
+
     // Ensure client has session so RLS policy (auth.uid() = id) allows the insert.
     if (authData.session) {
       await client.auth.setSession({

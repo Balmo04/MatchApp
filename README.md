@@ -20,10 +20,17 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Tyw_6qNRpTnqd4Sh6ZNjtN
 
 ## Supabase setup
 
+**📖 Para una guía completa paso a paso, consulta [SUPABASE_SETUP.md](SUPABASE_SETUP.md)**
+
+### Quick Setup
+
 1. Create a project at [supabase.com](https://supabase.com) and get **Project URL** and **anon public** key from Settings → API.
-2. In the Supabase Dashboard, open **SQL Editor** and run the migration: [supabase/migrations/001_initial.sql](supabase/migrations/001_initial.sql). This creates:
-   - Tables: `profiles`, `products`, `credit_transactions`
-   - RLS policies and a trigger that creates a profile when a user signs up (with 5 credits; `admin@match.com` gets `is_admin = true`)
-   - Storage bucket `product-images` and its policies
-3. (Optional) Create an admin user: sign up with email `admin@match.com` and a password; the trigger will set `is_admin = true` for that email.
-4. Put `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env.local`.
+2. **Enable Email provider** and **disable email confirmation** in Authentication → Providers → Email.
+3. In the Supabase Dashboard, open **SQL Editor** and run: [supabase/setup_complete.sql](supabase/setup_complete.sql)
+   - This creates all tables, RLS policies, and storage configurations
+   - Includes the critical "Users can insert own profile on signup" policy
+4. Verify setup by running: [supabase/verify_setup.sql](supabase/verify_setup.sql)
+5. Create storage bucket `product-images` (mark as public) in Storage.
+6. Put `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env.local`.
+
+**Note**: The app uses client-side profile creation (no database trigger). Make sure email confirmation is **disabled** for immediate login after signup.
