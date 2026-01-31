@@ -11,11 +11,11 @@ export const generateTryOn = async (
   selectedProducts: Product[]
 ): Promise<string> => {
   // #region agent log
-  DEBUG_LOG({ hypothesisId: 'H1', location: 'geminiService.ts:generateTryOn:entry', message: 'env at entry', data: { apiKeySet: typeof process !== 'undefined' && !!process.env?.API_KEY, geminiKeySet: typeof process !== 'undefined' && !!process.env?.GEMINI_API_KEY } });
+  DEBUG_LOG({ hypothesisId: 'H1', location: 'geminiService.ts:generateTryOn:entry', message: 'env at entry', data: { apiKeySet: !!import.meta.env.VITE_API_KEY } });
   // #endregion
-  // Fix: Initialized GoogleGenAI with a direct reference to process.env.API_KEY as per guidelines
+  // Use import.meta.env.VITE_API_KEY (Vite's recommended way for client-side env vars)
   // #region agent log
-  const apiKeyValue = typeof process !== 'undefined' ? process.env?.API_KEY : undefined;
+  const apiKeyValue = import.meta.env.VITE_API_KEY;
   DEBUG_LOG({ hypothesisId: 'H2,H3,H5', location: 'geminiService.ts:before GoogleGenAI', message: 'value at use site', data: { apiKeySet: !!apiKeyValue, typeOf: typeof apiKeyValue } });
   // #endregion
   const ai = new GoogleGenAI({ apiKey: apiKeyValue });

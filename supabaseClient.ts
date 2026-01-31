@@ -7,6 +7,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Configure .env.local.');
 }
+// #region agent log
+fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:init',message:'env check',data:{hasUrl:!!supabaseUrl,hasKey:!!supabaseAnonKey},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+// #endregion
 
 const client = createClient(supabaseUrl || '', supabaseAnonKey || '');
 
@@ -68,22 +71,22 @@ export const supabaseService = {
     imageFile: File
   ): Promise<{ data: Product | null; error: Error | null }> {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'uploadProduct entry',data:{fileName:imageFile.name,fileSize:imageFile.size},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'G'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'uploadProduct entry',data:{fileName:imageFile.name,fileSize:imageFile.size},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'G'})}).catch(()=>{});
     // #endregion
     const ext = imageFile.name.split('.').pop() || 'jpg';
     const path = `${crypto.randomUUID()}.${ext}`;
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'uploading to storage',data:{path,bucket:BUCKET_PRODUCT_IMAGES},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'uploading to storage',data:{path,bucket:BUCKET_PRODUCT_IMAGES},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H'})}).catch(()=>{});
     // #endregion
     const { error: uploadError } = await client.storage
       .from(BUCKET_PRODUCT_IMAGES)
       .upload(path, imageFile, { upsert: true });
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'storage upload returned',data:{hasError:!!uploadError,errorMsg:uploadError?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'storage upload returned',data:{hasError:!!uploadError,errorMsg:uploadError?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'I'})}).catch(()=>{});
     // #endregion
     if (uploadError) return { data: null, error: uploadError as unknown as Error };
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'inserting product row',data:{path},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'J'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'inserting product row',data:{path},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'J'})}).catch(()=>{});
     // #endregion
     const { data: row, error } = await client
       .from('products')
@@ -98,7 +101,7 @@ export const supabaseService = {
       .select('id, name, category, price, description, image_path, prompt_fragment, created_at')
       .single();
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'insert returned',data:{hasRow:!!row,hasError:!!error,errorMsg:error?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'K'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:uploadProduct',message:'insert returned',data:{hasRow:!!row,hasError:!!error,errorMsg:error?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'K'})}).catch(()=>{});
     // #endregion
     if (error) return { data: null, error: error as unknown as Error };
     return { data: rowToProduct(row), error: null };
@@ -109,44 +112,37 @@ export const supabaseService = {
     password: string
   ): Promise<{ data: { user: UserProfile } | null; error: Error | null }> {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'signIn entry',data:{email,hasClient:!!client,hasAuth:!!client?.auth},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'signIn entry',data:{email,hasClient:!!client,hasAuth:!!client?.auth},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'calling signInWithPassword',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'calling signInWithPassword',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
     // #endregion
     const { data: authData, error: authError } = await client.auth.signInWithPassword({
       email,
       password,
     });
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'signInWithPassword returned',data:{hasData:!!authData,hasError:!!authError},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'signInWithPassword returned',data:{hasData:!!authData,hasError:!!authError},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
     // #endregion
     if (authError) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'auth failed',data:{msg:authError.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'auth failed',data:{msg:authError.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
       // #endregion
       return { data: null, error: authError as unknown as Error };
     }
     if (!authData.user) return { data: null, error: new Error('No user') };
+    // Return minimal profile from auth user; onAuthStateChange will fetch full profile
+    // and update UI, avoiding duplicate profile fetch and AbortError race.
+    const minimalProfile: UserProfile = {
+      id: authData.user.id,
+      email: authData.user.email ?? '',
+      credits: 0,
+      isAdmin: false,
+    };
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'auth ok, querying profiles',data:{userId:authData.user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'signIn returning minimal profile',data:{userId:authData.user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'post-fix',runId:'post-fix'})}).catch(()=>{});
     // #endregion
-    const { data: profile, error: profileError } = await client
-      .from('profiles')
-      .select('id, email, credits, is_admin')
-      .eq('id', authData.user.id)
-      .single();
-
-    if (profileError || !profile) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:signIn',message:'profile query failed',data:{msg:profileError?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      return {
-        data: null,
-        error: (profileError as Error) ?? new Error('Profile not found'),
-      };
-    }
-    return { data: { user: rowToProfile(profile) }, error: null };
+    return { data: { user: minimalProfile }, error: null };
   },
 
   async signUp(
@@ -176,15 +172,27 @@ export const supabaseService = {
   },
 
   async getProfile(): Promise<{ data: UserProfile | null; error: Error | null }> {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:getProfile',message:'getProfile entry',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     const { data: { user } } = await client.auth.getUser();
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:getProfile',message:'getUser returned',data:{hasUser:!!user,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     if (!user) return { data: null, error: null };
 
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:getProfile',message:'querying profiles',data:{userId:user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
+    // #endregion
     const { data: profile, error } = await client
       .from('profiles')
       .select('id, email, credits, is_admin')
       .eq('id', user.id)
       .single();
 
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:getProfile',message:'profiles query returned',data:{hasProfile:!!profile,hasError:!!error,errorMsg:error?.message?.slice(0,100)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
+    // #endregion
     if (error) return { data: null, error: error as unknown as Error };
     if (!profile) return { data: null, error: null };
     return { data: rowToProfile(profile), error: null };
@@ -225,12 +233,24 @@ export const supabaseService = {
 
   /** Subscribe to auth state changes; callback receives UserProfile | null */
   onAuthStateChange(callback: (profile: UserProfile | null) => void): () => void {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'onAuthStateChange setup',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     const { data: { subscription } } = client.auth.onAuthStateChange(async (_event, session) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'auth state changed',data:{event:_event,hasSession:!!session,hasUser:!!session?.user,userId:session?.user?.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
       if (!session?.user) {
         callback(null);
         return;
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'calling getProfile',data:{userId:session.user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
+      // #endregion
       const { data } = await supabaseService.getProfile();
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseClient.ts:onAuthStateChange',message:'getProfile returned',data:{hasData:!!data,hasError:false},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3,H5'})}).catch(()=>{});
+      // #endregion
       callback(data ?? null);
     });
     return () => subscription.unsubscribe();

@@ -35,14 +35,20 @@ const App: React.FC = () => {
     e.preventDefault();
     setAuthError(null);
     setAuthLoading(true);
+    // #region agent log
+    const timeoutMs = 15000;
+    fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleLogin',message:'login start',data:{timeoutMs},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
+    // #endregion
     try {
-      const timeoutMs = 15000;
       const result = await Promise.race([
         supabase.signIn(authEmail, authPassword),
         new Promise<{ data: null; error: Error }>((_, reject) =>
           setTimeout(() => reject(new Error('La conexión tardó demasiado. Revisa tu red o Supabase.')), timeoutMs)
         ),
       ]);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleLogin',message:'race result',data:{hasError:!!result.error,errorMsg:result.error?.message?.slice(0,80),hasUser:!!result.data?.user},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
       const { data, error } = result;
       if (error) {
         setAuthError(error.message || 'Error al iniciar sesión');
@@ -50,6 +56,9 @@ const App: React.FC = () => {
       }
       if (data?.user) setUser(data.user);
     } catch (err: unknown) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/45c51b0e-4459-4f93-b2c0-30a1e2f81e2e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:handleLogin',message:'catch',data:{msg:err instanceof Error ? err.message : String(err)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       setAuthError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
       setAuthLoading(false);
