@@ -27,6 +27,9 @@ const TryOnResult: React.FC<TryOnResultProps> = ({ userImage, selectedProducts, 
 
   useEffect(() => {
     const process = async () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hypothesisId: 'H4', location: 'TryOnResult.tsx:process', message: 'calling generateTryOn', data: { productsCount: selectedProducts.length }, timestamp: Date.now(), sessionId: 'debug-session' }) }).catch(() => {});
+      // #endregion
       try {
         const stageInterval = setInterval(() => {
           setLoadingStage(prev => (prev + 1) % stages.length);
@@ -37,6 +40,10 @@ const TryOnResult: React.FC<TryOnResultProps> = ({ userImage, selectedProducts, 
         onSuccess(1); // Notify parent of credit usage
         clearInterval(stageInterval);
       } catch (err: any) {
+        // #region agent log
+        const errMsg = err?.message ?? String(err);
+        fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hypothesisId: 'H3', location: 'TryOnResult.tsx:catch', message: 'generateTryOn error', data: { errorMessage: errMsg }, timestamp: Date.now(), sessionId: 'debug-session' }) }).catch(() => {});
+        // #endregion
         setError(err.message || "Failed to generate your look. Please try again.");
       } finally {
         setLoading(false);

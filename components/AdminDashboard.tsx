@@ -22,18 +22,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     if (!imageFile) return;
 
     setIsUploading(true);
-    const { error } = await supabase.uploadProduct(
-      { name, category, price: parseFloat(price), description, promptFragment },
-      imageFile
-    );
-
-    if (!error) {
-      alert("Product added successfully!");
-      onClose();
-    } else {
-      alert("Failed to add product.");
+    try {
+      const { error } = await supabase.uploadProduct(
+        { name, category, price: parseFloat(price), description, promptFragment },
+        imageFile
+      );
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:handleSubmit',message:'uploadProduct returned',data:{hasError:!!error},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'L'})}).catch(()=>{});
+      // #endregion
+      if (!error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/ecaa6040-b8f8-4f67-a62e-e3d95ab9e53c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:handleSubmit',message:'no error, showing success alert',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'M'})}).catch(()=>{});
+        // #endregion
+        alert("Product added successfully!");
+        onClose();
+      } else {
+        alert(`Failed to add product: ${error.message}`);
+      }
+    } catch (err: unknown) {
+      alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsUploading(false);
     }
-    setIsUploading(false);
   };
 
   return (
