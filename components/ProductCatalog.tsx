@@ -43,12 +43,12 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ onSelectionComplete, on
     <div className="max-w-7xl mx-auto py-12 px-4 flex flex-col lg:flex-row gap-12">
       <div className="lg:w-1/4 space-y-8">
         <div>
-          <h2 className="text-4xl font-serif mb-6">Step 2: Selection</h2>
-          <p className="text-slate-500 text-sm leading-relaxed">Select up to {MAX_SELECTIONS} garments to create your custom outfit. Our AI will seamlessly layer them onto your photo.</p>
+          <h2 className="text-4xl font-serif mb-6 text-slate-900 dark:text-white">Step 2: Selection</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Select up to {MAX_SELECTIONS} garments to create your custom outfit. Our AI will seamlessly layer them onto your photo.</p>
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-xs font-bold tracking-widest uppercase text-slate-400">Categories</h4>
+          <h4 className="text-xs font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500">Categories</h4>
           <div className="flex flex-col space-y-2">
             {['All', ...Object.values(Category)].map(cat => (
               <button
@@ -56,8 +56,8 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ onSelectionComplete, on
                 onClick={() => setActiveCategory(cat)}
                 className={`text-left px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
                   activeCategory === cat 
-                  ? 'bg-slate-900 text-white shadow-lg' 
-                  : 'bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 shadow-lg' 
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 {cat}
@@ -100,10 +100,10 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ onSelectionComplete, on
             <input 
               type="text" 
               placeholder="Search products..." 
-              className="w-full bg-white border border-slate-200 rounded-full py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-full py-3 pl-12 pr-4 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
             />
           </div>
-          <button className="flex items-center space-x-2 bg-white border border-slate-200 px-6 py-3 rounded-full text-sm font-medium hover:bg-slate-50">
+          <button className="flex items-center space-x-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 px-6 py-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
             <Filter className="w-4 h-4" />
             <span>Filters</span>
           </button>
@@ -112,7 +112,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ onSelectionComplete, on
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="animate-pulse bg-white rounded-3xl h-96 shadow-sm" />
+              <div key={i} className="animate-pulse bg-white dark:bg-slate-800 rounded-3xl h-96 shadow-sm" />
             ))}
           </div>
         ) : (
@@ -121,10 +121,10 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ onSelectionComplete, on
               <div 
                 key={product.id}
                 onClick={() => toggleSelection(product.id)}
-                className={`group relative bg-white rounded-[2.5rem] overflow-hidden border transition-all duration-500 cursor-pointer ${
+                className={`group relative bg-white dark:bg-slate-800 rounded-[2.5rem] overflow-hidden border transition-all duration-500 cursor-pointer ${
                   selectedIds.includes(product.id)
-                  ? 'border-indigo-500 ring-2 ring-indigo-500/20 scale-[0.98]'
-                  : 'border-slate-100 hover:shadow-2xl hover:-translate-y-2'
+                  ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 dark:ring-indigo-400/30 scale-[0.98]'
+                  : 'border-slate-100 dark:border-slate-700 hover:shadow-2xl hover:-translate-y-2'
                 }`}
               >
                 <div className="aspect-[4/5] overflow-hidden relative">
@@ -145,10 +145,10 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ onSelectionComplete, on
                 </div>
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">{product.name}</h3>
-                    <span className="font-serif text-slate-500">${product.price}</span>
+                    <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{product.name}</h3>
+                    <span className="font-serif text-slate-500 dark:text-slate-400">${product.price}</span>
                   </div>
-                  <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{product.category}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium tracking-wide uppercase">{product.category}</p>
                 </div>
               </div>
             ))}

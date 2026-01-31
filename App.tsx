@@ -11,6 +11,8 @@ import CreditSystem from './components/CreditSystem';
 import { supabase } from './supabaseClient';
 import { ArrowLeft, Mail, Lock } from 'lucide-react';
 
+const THEME_KEY = 'match-theme';
+
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>(Step.UPLOAD);
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -24,6 +26,25 @@ const App: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      return typeof window !== 'undefined' && localStorage.getItem(THEME_KEY) === 'dark';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+    } catch {}
+  }, [isDark]);
 
   useEffect(() => {
     const unsubscribe = supabase.onAuthStateChange((profile) => {
@@ -150,18 +171,24 @@ const App: React.FC = () => {
 
   if (!user) {
     if (!showLogin) {
-      return <Landing onEnter={() => setShowLogin(true)} />;
+      return (
+        <Landing
+          onEnter={() => setShowLogin(true)}
+          isDark={isDark}
+          onToggleDark={() => setIsDark((d) => !d)}
+        />
+      );
     }
     return (
-      <div className="min-h-screen bg-[#F9F8F6] flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white p-12 rounded-[3rem] shadow-2xl border border-slate-100">
+      <div className="min-h-screen bg-[#F9F8F6] dark:bg-slate-900 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white dark:bg-slate-800 p-12 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-700">
           <div className="text-center mb-10">
-            <h1 className="text-5xl font-serif text-slate-900 mb-4 tracking-tight">MATCH</h1>
-            <p className="text-slate-500 font-medium tracking-wide text-xs uppercase">The Virtual Luxury Atelier</p>
+            <h1 className="text-5xl font-serif text-slate-900 dark:text-white mb-4 tracking-tight">MATCH</h1>
+            <p className="text-slate-500 dark:text-slate-400 font-medium tracking-wide text-xs uppercase">The Virtual Luxury Atelier</p>
           </div>
 
           {/* Toggle between Login and Register */}
-          <div className="flex items-center justify-center mb-6 bg-slate-50 rounded-full p-1">
+          <div className="flex items-center justify-center mb-6 bg-slate-50 dark:bg-slate-700/50 rounded-full p-1">
             <button
               type="button"
               onClick={() => {
@@ -170,8 +197,8 @@ const App: React.FC = () => {
               }}
               className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all ${
                 !isRegistering
-                  ? 'bg-slate-900 text-white shadow-md'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 shadow-md'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Iniciar Sesión
@@ -184,8 +211,8 @@ const App: React.FC = () => {
               }}
               className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all ${
                 isRegistering
-                  ? 'bg-slate-900 text-white shadow-md'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 shadow-md'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Registrarse
@@ -194,7 +221,7 @@ const App: React.FC = () => {
           
           <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase ml-4">Email Address</label>
+              <label className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase ml-4">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input 
@@ -203,13 +230,13 @@ const App: React.FC = () => {
                   value={authEmail}
                   onChange={e => setAuthEmail(e.target.value)}
                   placeholder="name@atelier.com" 
-                  className="w-full bg-slate-50 border-none rounded-2xl px-12 py-4 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-700/50 border-none rounded-2xl px-12 py-4 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase ml-4">Password</label>
+              <label className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase ml-4">Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input 
@@ -218,7 +245,7 @@ const App: React.FC = () => {
                   value={authPassword}
                   onChange={e => setAuthPassword(e.target.value)}
                   placeholder="••••••••" 
-                  className="w-full bg-slate-50 border-none rounded-2xl px-12 py-4 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-700/50 border-none rounded-2xl px-12 py-4 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 />
               </div>
             </div>
@@ -226,8 +253,8 @@ const App: React.FC = () => {
             {authError && (
               <p className={`text-center text-sm py-2 px-4 rounded-xl ${
                 authError.includes('exitosamente') || authError.includes('confirmar') || authError.includes('Cuenta creada') || authError.includes('Bienvenido')
-                  ? 'text-green-700 bg-green-50'
-                  : 'text-red-600 bg-red-50'
+                  ? 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30'
+                  : 'text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/30'
               }`}>
                 {authError}
               </p>
@@ -236,7 +263,7 @@ const App: React.FC = () => {
             <button 
               type="submit" 
               disabled={authLoading}
-              className="w-full bg-slate-900 text-white py-4 rounded-full font-bold shadow-xl hover:bg-slate-800 disabled:opacity-50 transition-all"
+              className="w-full bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 py-4 rounded-full font-bold shadow-xl hover:bg-slate-800 dark:hover:bg-white disabled:opacity-50 transition-all"
             >
               {authLoading 
                 ? (isRegistering ? 'Registrando...' : 'Entrando...') 
@@ -245,12 +272,12 @@ const App: React.FC = () => {
             </button>
             
             {!isRegistering && (
-              <p className="text-center text-[10px] text-slate-400">
+              <p className="text-center text-[10px] text-slate-400 dark:text-slate-500">
                 ¿No tienes cuenta?{' '}
                 <button
                   type="button"
                   onClick={() => setIsRegistering(true)}
-                  className="text-indigo-600 hover:text-indigo-800 underline"
+                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 underline"
                 >
                   Regístrate aquí
                 </button>
@@ -260,7 +287,7 @@ const App: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowLogin(false)}
-            className="w-full mt-4 text-slate-400 hover:text-slate-600 text-sm"
+            className="w-full mt-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-sm"
           >
             ← Volver a la landing
           </button>
@@ -275,16 +302,18 @@ const App: React.FC = () => {
       onLogout={() => { supabase.signOut(); setUser(null); }}
       onOpenAdmin={() => setShowAdmin(true)}
       onOpenCredits={() => setShowCredits(true)}
+      isDark={isDark}
+      onToggleDark={() => setIsDark((d) => !d)}
     >
-      <div className="min-h-screen">
+      <div className="min-h-screen dark:bg-slate-900">
         {/* Step Progress Bar */}
         <div className="max-w-7xl mx-auto px-4 mt-8 flex items-center justify-center">
           <div className="flex items-center space-x-4">
-            <div className={`w-3 h-3 rounded-full ${currentStep === Step.UPLOAD ? 'bg-indigo-600 ring-4 ring-indigo-100' : 'bg-slate-200'}`} />
-            <div className="w-12 h-[1px] bg-slate-200" />
-            <div className={`w-3 h-3 rounded-full ${currentStep === Step.BROWSE ? 'bg-indigo-600 ring-4 ring-indigo-100' : 'bg-slate-200'}`} />
-            <div className="w-12 h-[1px] bg-slate-200" />
-            <div className={`w-3 h-3 rounded-full ${currentStep === Step.TRYON ? 'bg-indigo-600 ring-4 ring-indigo-100' : 'bg-slate-200'}`} />
+            <div className={`w-3 h-3 rounded-full ${currentStep === Step.UPLOAD ? 'bg-indigo-600 dark:bg-indigo-500 ring-4 ring-indigo-100 dark:ring-indigo-900/50' : 'bg-slate-200 dark:bg-slate-600'}`} />
+            <div className="w-12 h-[1px] bg-slate-200 dark:bg-slate-600" />
+            <div className={`w-3 h-3 rounded-full ${currentStep === Step.BROWSE ? 'bg-indigo-600 dark:bg-indigo-500 ring-4 ring-indigo-100 dark:ring-indigo-900/50' : 'bg-slate-200 dark:bg-slate-600'}`} />
+            <div className="w-12 h-[1px] bg-slate-200 dark:bg-slate-600" />
+            <div className={`w-3 h-3 rounded-full ${currentStep === Step.TRYON ? 'bg-indigo-600 dark:bg-indigo-500 ring-4 ring-indigo-100 dark:ring-indigo-900/50' : 'bg-slate-200 dark:bg-slate-600'}`} />
           </div>
         </div>
 
@@ -293,7 +322,7 @@ const App: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 mt-8">
             <button 
               onClick={() => setCurrentStep(currentStep === Step.TRYON ? Step.BROWSE : Step.UPLOAD)}
-              className="flex items-center space-x-2 text-slate-500 hover:text-indigo-600 transition-colors font-medium text-sm"
+              className="flex items-center space-x-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>GO BACK</span>
